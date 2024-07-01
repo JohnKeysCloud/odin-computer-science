@@ -42,7 +42,7 @@
     ~5
     // 5 in binary is 101
     // ~101 = 010
-    // 2 in decimal is 2
+    // 010 in decimal is 2
     ```
 
   - `<<` (Left Shift): Shifts the bits to the left.
@@ -51,7 +51,7 @@
     5 << 1
     // 5 in binary is 101
     // 101 << 1 = 1010
-    // 10 in decimal is 10
+    // 1010 in decimal is 10
     ```
 
   - `>>` (Right Shift): Shifts the bits to the right.
@@ -60,7 +60,7 @@
     5 >> 1
     // 5 in binary is 101
     // 101 >> 1 = 10
-    // 2 in decimal is 2
+    // 10 in decimal is 2
     ```
 
 - Bitwise operators are used in many applications such as:

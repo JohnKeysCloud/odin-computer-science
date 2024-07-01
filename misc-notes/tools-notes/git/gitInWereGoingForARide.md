@@ -1,4 +1,4 @@
-# Git In, We're going for a ride.
+# Git In, We're going for a ride 😎. 
 **Overview**
 * Review of Git Basics
 * History-changing Git commands
@@ -22,9 +22,9 @@ One might visualize a branch as a group of commits; However, this isn't the case
 This leads to the question, "If a branch is just a finger pointing to a single commit, how does that single commit know about all the commits that came before it?"
 The answer is that each commit _also_ a pointer that points to the commit that came before it (similar to a linked list data structure). 
 
-Lets think back to our use of `git rebase -i HEAD~2`. 
-If you can remember, this command lets us edit the last two commits.
-How did Git know which two commits to edit?
+Take for example `git rebase -i HEAD~2`. 
+This command lets us edit the last two commits.
+How does Git know which two commits to edit?
 **Pointers!**
 We start at `HEAD`, which is a special pointer for keeping track of the branch you're currently on.
 `HEAD` points to our most recent commit in the current branch. That commit points to the commit made directly before it, which we can call commit two.
@@ -40,11 +40,13 @@ Lets also say we had a feature branch called `G` from `C` that we eventually mer
 
 Here's the visual:
 
+``` bash
 `A` - `F`
   \   /
    `B` - `G` - `E`
      \
      `C`
+```
 
 
 How would `HEAD^` traverse starting from `HEAD`, `E`?
@@ -834,3 +836,5 @@ Also, like `git reset` and `git add`, `checkout` will accept a `--patch` option 
 
 ---
 
+## Working with Remotes
+<!-- ! You are here -->

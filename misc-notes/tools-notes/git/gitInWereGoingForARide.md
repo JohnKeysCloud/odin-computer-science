@@ -1,4 +1,6 @@
 # Git In, We're going for a ride 😎. 
+✨ `git [command] --help`
+
 **Overview**
 * Review of Git Basics
 * History-changing Git commands
@@ -6,11 +8,183 @@
 * Using remotes to change history
 * Dangers of history-changing operations
 * Pointers
+* Introduction to contributing
+
+---
+
+## Git Intro & Graph Theory
+💭 Leonhard Euler, 1735AC.
+
+Graph theory can be used to describe a lot of things.
+One straightfoward example is **maps**.
+You can _think_ of graph theory as a way of encoding information about two aspects of a map: **places to go, and ways to get there.**
+
+The point: **a Git repository is one giant graph**
+
+Most of the time when you interact with Git, you're working with commits one way or another.
+A git commit consists of two things: 
+  1. a pointer to the state of your code at some moment in time.
+  2. Zero or more pointers to "parent" commits.
+
+(_Hint: the word "pointer" means you're probably talking about a graph… bitch._)
+
+A Git commit is a node in a graph, and each one of those nodes can point to other nodes that came before them.
+Another fun fact about Git commits: A commits ID is a SHA-1 hash of several pieces of information: the contents of the commit, and the IDs of its parent commits.
+
+### Git Objects & Garbage Collection
+#### Git Objects
+1. **Blob Object**:
+   - **Blobs** store the contents of files. Each blob is a snapshot of a file's content at a particular point in time.
+   - Blobs do not store metadata like filenames or directory paths.
+
+2. **Tree Object**:
+   - **Trees** store the structure of directories and files.
+   - A tree object contains references (pointers) to blobs and other tree objects. This way, it represents both files and subdirectories.
+   - Each entry in a tree object includes:
+     - The SHA-1 hash of the blob or subtree.
+     - The file mode (permissions).
+     - The filename or directory name.
+
+3. **Commit Object**:
+   - **Commits** store the state of the repository at a particular point in time.
+   - A commit object contains:
+     - A reference to a tree object that represents the directory structure and the state of the files at the time of the commit.
+     - Metadata about the commit, such as the author, committer, date, and commit message.
+     - References to parent commits (for merges or history tracking).
+
+##### Blobs and Trees
+###### Blobs
+A **blob** is an abbreviation for _binary large object_.
+It is a fundamental data type in Git.
+It represents the contents of a file as a binary object, storing the files data without any metadata like filename, permissions, or directory structure.
+
+When you add a file to a Git repository, Git compresses the files contents and stores them in the `.git/objects` folder mentioned above as a blob. 
+Each blob is identified by a unique SHA-1 has of its contents.
+
+Each blob is referenced by a tree object, which represents the directory structure, and the tree object is referenced by the commit object.
+The **blob** is unreachable because it has been erased from history.
+
+The default grace period for reaching _unreachable_ objects is typically 90 days.
+
+###### How Blobs and Trees Reference Each Other
+1. **Blobs in Trees**:
+  - When you add a file to the repository and commit it, Git creates a blob for the file's content.
+  - Git then creates a tree object that includes a reference to this blob. The tree object also includes the filename and file mode, effectively placing the blob within the directory structure.
+
+2. **Trees in Commits**:
+  - When you commit changes, Git creates a new tree object representing the entire directory structure at the time of the commit.
+  - The commit object then references this tree object, capturing the state of the project at that specific commit.
+
+###### Repository Data Storage Visualized
+Imagine you have a repository with the following structure:
+
+``` sh
+my_repo/
+├── file1.txt
+└── dir/
+    └── file2.txt
+```
+
+1. **Blobs**:
+   - `file1.txt` content is stored in a blob (let's say with SHA-1 hash `blob1`).
+   - `file2.txt` content is stored in another blob (`blob2`).
+
+2. **Tree Objects**:
+   - A tree object for `dir` includes an entry for `file2.txt` referencing `blob2`.
+   - A tree object for the root directory includes entries for `file1.txt` referencing `blob1` and for `dir` referencing the tree object of `dir` in the forms of SHA-1 hashes:
+    * A tree object references directories by storing the SHA-1 hash of another tree object along with the directory name and mode. Using the above visual, the tree object for `my_repo/` might look like this:
+    ```
+    100644 blob blob1_sha    file1.txt
+    040000 tree dir_tree_sha dir
+    ```
+
+3. **Commit Object**:
+   - The commit object references the tree object _representing the root directory_.
+
+###### Information Retrieval Commands
+To see these objects, you can use the following commands:
+
+1. **View the commit object**:
+   ```sh
+   git cat-file -p <commit_sha1>
+   ```
+
+2. **View the tree object referenced by the commit**:
+   ```sh
+   git cat-file -p <tree_sha1>
+   ```
+
+3. **View the blob object referenced by the tree**:
+   ```sh
+   git cat-file -p <blob_sha1> # {1}
+   ```
+
+   {1} To find the Blobs SHA-1 Hash, use the `git ls-files` command with the `-s` option to show the SHA-1 hashes of the blobs for your files.
+
+###### Summary
+- **Blobs** store file contents.
+- **Trees** organize blobs and other trees, representing the directory structure.
+- **Commits** reference trees, capturing the state of the repository at a specific point in time.
+
+Each layer references the one below it, building up the complete structure of your project in a way that efficiently tracks changes and maintains history.
+
+#### Garbage Collection
+When you use `git commit --amend` (more on this command below), you're actually building a completely different commit, and pointing your local branch reference to it instead.
+
+**The initial commit you made (before ammending) is still there on disk, and you can still get back to it.**
+
+However, in the interest of not cluttering up your view, neither `git log` nor your Git visualizer will show it to you, because it's not part of the history of something, Git thinks, you care about.
+
+Eventually, Git will decide that it's time to run **garbage collection**.
+You can trigger this process yourself using, `git gc`.
+
+> **Starting from every branch and every tag, Git walks back through the graph, building a list of every commit it can reach. Once it's reached the end of every path, it deletes all the commits it didn't visit.** 
+
+The unreachable objects that that are removed include commits, blobs, trees, and tags.
+
+Unreachable objects are typically:
+  * **Dangling Commits:** commits that are not part of any branches history.
+  * **Unreferenced Blobs:** file contents that are not pointed to by any tree or commit.
+  * **Old Commits:** commits that were replaced by amended commits.
+
+Garbage collection also handles loose objects into pack files for efficient storage.
+An example of a loose file is a file that was a part of a commit (that added the file), that was deleted in an amended commit. 
+They are individual files stored in the `.git/objects` directory. 
+When an object is no longer referenced by any branch, tag, or other Git object, it is considered "loose."
+
+Something very important to understand about Gits garbage collection algorithm can be expressed as:
+> "**Starting from every branch and every tag**, Git walks back through the graph, building a list of every commit it can reach."
+
+### References
+> **REFERENCE MAKE COMMITS REACHABLE**
+_(References are pointers to commits)_
+
+References come in several flavors: **local branch**, **remote branch**, and **tag**.
+
+On disk, a **local branch reference** consists entirely of a file in your project's `.git/refs/head directory`.
+This file contains the 40-byte identifier of the commit that the reference points to… and that's it!
+
+**The entire file is 40 bytes.**
+_(If you ever hear that Git allows "cheap branching", this is what they're referring to.)_
+
+In other words, creating a branch in Git just means writing 40 bytes to disk, which is why `git branch foo` is so fucking fast.
+
+**Local branch references** are specific to a single repository: your local one.
+Commands that affect local branch references include `commit`, `merge`, `rebase` and `reset`.
+
+**Remote branch references** are also specific to a single repository, but one that's previously been defined as a remote.
+Commands that affect remote branches include **fetch** and **push**.
+
+(The `pull` command is a special case: It combines **fetch** and either a `merge` or a `rebase`, depending on your Git configuration.)
+
+**Tag references** are basically like branch references that never move. 
+**Once you've created a tag, it will never change** (unless you explicitly update it using the `--force` option).
+This behavior makes them useful for marking specific versions of a software package, or marking exactly what got deployed to a production server on a particular date.
+The only command that affects **tags**… is `tag`.
 
 ---
 
 ## Basics Review: Commits, Branches and Pointers
-
 ### What are Commits?
 Commits are snapshots.
 Every time you type in `git commit`, your computer is taking a figurative _picture_ of all the file contents that have been stage with `git add .`
@@ -30,35 +204,14 @@ We start at `HEAD`, which is a special pointer for keeping track of the branch y
 `HEAD` points to our most recent commit in the current branch. That commit points to the commit made directly before it, which we can call commit two.
 That's how `git rebase -i HEAD~2` starts with a HEAD pointer, and then follows subsequent pointers to find which two commits to edit.
 
-#### `HEAD` traversal via `^`
-…(i.e., `HEAD^2`) uses pointers in a non-linear way. Instead of pointing only to the previous commits of the same branch, when there are merge commits, `HEAD^n` includes pointers for both parents. The first pointer being the branch we originally merged into and the second, the 'feature' branch itself.
+#### Branches as Savepoints
+Because a Git branch is just a 40-byte file on disk, **it takes order of magnitude more time for you to tell the computer to create a branch** (by typing `git branch foo`) **than for your computer to actually do it.**
 
-✨ Example:
-Lets say we have a main branch with 5 commits, `A`, `B`, `C`, `D` and `E`.
-Lets also say we had a feature branch called `F` from `A` that we eventually merged into `B`. 
-Lets also say we had a feature branch called `G` from `C` that we eventually merged into `D`.
+Because branches are references, **references make commits reachable**… creating a branch is a way to **nail down** part of the graph that you might want to come back to later.
 
-Here's the visual:
+And because neither `git merge` nor `git rebase` will change your existing commits (remember. a commits ID is a hash of its contents **_and its history_**), you can create a temporary branch any time you want to try something you're even just a little bit unsure about. 
 
-``` bash
-`A` - `F`
-  \   /
-   `B` - `G` - `E`
-     \
-     `C`
-```
-
-
-How would `HEAD^` traverse starting from `HEAD`, `E`?
-
-1. `HEAD` = `E` (Given)
-1. `HEAD^` = `D`
-2. `HEAD^2` = `B`
-3. `HEAD^3` = `A`
-4. `HEAD^4` = `F`
-
-
-This is because `HEAD^` refers to the first parent of the current commit, `HEAD^2` refers to the second parent, and so on. When you're on commit `E`, `D` is the first parent (since `E` was created from `D` in the main branch), `B` is the second parent (since `E` was also created from `B` when merging the `F` branch), and so on.
+In other words for you fuckin' nerds, creating a branch before you try a merge or a rebase is like saving you game before you battle the boss.
 
 ---
 
@@ -153,7 +306,7 @@ It is imperative to _rewrite history_ in a safe and responsible manner.
 
   * A typical scenario is rebasing a topic branch onto the main branch… where the commits of your topic branch are replayed/applied to the main branch. You'd call `git rebase main` from the topic branch.
 
-**To perform a fast-forward merge from Step 5:**
+**To perform a fast-forward merge from (Step 5):**
   1. Checkout the branch that was rebased onto (typically the main branch) using `git checkout main`.
   2. Merge the sub-branch/feature/experiment using `git merge sub-branch`.
 
@@ -215,7 +368,7 @@ It is imperative to _rewrite history_ in a safe and responsible manner.
 One rule:
 **Do not rebase commits that exist outside your repository and that people may have based work on.**
 
-> In other words, rebase local changes ebfore pushing to clean up _your_ work, but never rebase anything that you've pushed somewhere. If you follow this rule… you'll be chillin'; Otherwise, several kittens will, in fact, experience a simultaneous existential crisis. We all know what happens post felis catus existential crisis'. 💭
+> In other words, rebase local changes before pushing to clean up _your_ work, but never rebase anything that you've pushed somewhere. If you follow this rule… you'll be chillin'; Otherwise, several kittens will, experience a severe existential crisis… and we all know what happens post felis catus existential crisis'. 💭
 
 When you `rebase` stuff, you're abandoning existing commits and creating new ones that are similar but different. If you push commits somewhere and others pull them down and base work on them, and then you rewrite those commits with `git rebase` and push them up again, your collaborators will have to re-merge their work and things will get messy when you try to pull their work back into yours.
 See `The Perils of Rebasing` at: https://git-scm.com/book/en/v2/Git-Branching-Rebasing#rbdiag_g 
@@ -269,11 +422,42 @@ Here's a breakdown:
 
   * **Patch-id**:
     - A unique checksum calculated based on just the content of the patch itself, not including metadata like the commit message or author information. This allows git to identify identical changes even if they are in different commits. Patch-ids are useful in scenarios like;
-      * *Detecting duplicate patches*:
+      * **Detecting duplicate patches**:
         - Even if two different commits have different SHA-1 checksums, if their patch-ids are the same, they introduce the same changes (like when rebasing onto a forcibly pushed rebase branch that was originially a merge).
-      * *Cherry-picking*: Applying the same patch to different branches.
+      * **Cherry-picking** (_more on this below_): Applying the same patch to different branches.
 
----
+### A Helpful Mnemoic for `git rebase`
+A helpful mnemonic for `git rebase` arguments (by **Sam Livingston-Gray**):
+  The two following command chains are identical in behavior: 
+
+  1. ```bash 
+      #{1}
+      git checkout foo
+      git checkout -b newbar # {2}
+      git checkout bar 
+      git reset --hard newbar #{3}
+      git branch -d newbar
+    ```
+
+  2. ```bash
+      git rebase foo bar
+    ```
+💭 {1} **First Command Chain Detailed Steps**:
+  * git checkout foo: Switch to the foo branch.
+  * git checkout -b newbar: Create and switch to a new branch newbar at the same commit as foo.
+  * git checkout bar: Switch to the bar branch.
+  * git reset --hard newbar: Reset the bar branch to point to the same commit as newbar (which is the same as the latest commit on foo).
+  * git branch -d newbar: Delete the temporary newbar branch.
+
+💭 {2} `newbar` is created as a new branch that points to the `HEAD` of the `foo` branch (i.e., the latst commit on `foo`).
+💭 {3} The `git reset --hard newbar` command forcibly moves the `bar` branch to point to the same commit as `newbar` (which is the latest commit on `foo`). This effectively repositions `bar` to be based on the same commit as `foo`.
+
+As a reminder for the power of `git rebase`… 
+When you do a rebase, you are **rewriting history**. 
+You are essentially telling Git,
+"Hey, you know all that shit thats over there on that completely different timeline? I want you to pretend that **ALL THAT SHIT** happened over here instead."
+
+> In English, we read from **left to right**. On most charts that show the change in something over time, time is shown on the x-axis of the graph, with time increasing **from left to right**. When you issue commands to the shell, you can put several of them on one line, and they'll be executed in order **from left to right**. So one tip for using `git rebase` is to always give it two arguments (until you fully understand it that is): **The name of the place you want to START from and the name of the place you want to end up** …Or to put it another way, you tell rebase the sequence of events you want it to create… **from left to right**: `git rebase first_this then_this`.
 
 ### Interactive Rebase: `git rebase -i` 
 `git rebase -i` is a command which allows us to `-i`nteractively stop after each commit we're trying to modify, and then make whatever changes we wish. 
@@ -836,5 +1020,668 @@ Also, like `git reset` and `git add`, `checkout` will accept a `--patch` option 
 
 ---
 
-## Working with Remotes
-<!-- ! You are here -->
+## Dangers and Best Practices (Pertaining to history changing Git commands)
+### Danger List
+* `commit --amend`
+* `rebase`, 
+* `reset`  
+* `push --force` 
+
+They can destroy work your coworkers have created.
+When attempting to rewrite history, always check the dangers of the particular command you're using.
+
+### Best Practice
+1. If working on a team project, make sure rewriting history is safe to do and others know you're doing it.
+2. Ideally, stick to using these commands only on branches that you're working with by yourself.
+3. Using the `-f` flag to force something should **scare you**. Have a really good reason for using it.
+4. Don't push after every single commit, changing published history should be avoided when possible. 
+5. Regarding the specific commands we've covered:
+  - For `git commit --amend`, never amend commits that have been pushed to remote repositories.
+  - For `git rebase`, never rebase a repository that others may work off of.
+  - For `git reset`, never reset commits that have been pushed to remote repositories. 
+  - For `git push --force`, only use it when appropriate, with caution, and preferably default to using `git push --force-with-lease`.
+
+---
+
+## `git push --force`
+If you want to _push a branch_ you've made changes on to a remote repository, normally, Git will only let you push your changes if you've already updated your local branch with the latest commits from this remote.
+
+In the context of Git, _push a branch_ means updating the remote repository with the changes from your local branch. This can involve different actions depending on the current state of the remote and local branches:
+
+  What happens when you push a branch.
+  1. **If there are no conflicts**: When you push your branch, Git will append your branch to the remote branch. This means your commits will be added to the end of the chain of commits in the remote branch.
+
+  2. **If there are conflicts**: If the remote branch has commits that your local branch doesn't have (i.e., your local branch is behind), Git will reject the push. You need to first update your local branch with the latest commits from the remote repository, typically by performing a `git pull` to fetch and integrate these changes. After resolving any conflicts and committing the merge, you can then push your branch. This process ensures that the remote branch is updated with a complete and coherent history of commits, including both your changes and those from other collaborators.
+
+  So, to summarize:
+  - **Appending**: If your local branch is up to date with the remote, pushing will append your new commits to the remote branch.
+  - **Updating**: If your local branch is behind, you'll need to update it with the latest changes from the remote before you can push your changes, ensuring the branch history remains consistent.
+
+If you haven't updated your local branch. and you're attempting to `git push` a commit which would create a **conflict** on the remote repository, you'll get an error message.
+This is a actually a great thing. This is a safety mechanism to prevent you from overwriting commits created by the people you're working with, which could fuck shit up. 
+You get the error because your history is outdated.
+
+The `git push --force` command overwrites the remote repository with your own local history.
+If we are working with others, this gives us potential to destroy the work of those we are collaborating with. This command can be **very dangerous**.
+Instead, we can fix our outdated history error by updating our local history using `fetch`, `merge`, and then attempting to `push` again.
+Another option we have when collaborating with others and want to _undo_ a commit we just made, we can instead use `git revert`:
+
+``` bash
+git revert HEAD
+git push origin main 
+```
+
+Remember, when we are working with `HEAD`, aka the current commit we're viewing.
+So `revert`-ing simply will revert the changes to `HEAD`.
+Then we would push our new commit to whichever branch we're working on (most typically a feature branch).
+
+Understanding how dangerous `git push --force` can be, why does it exist and when can it be applied practically?
+A very common scenario for its use is when a developer is updating pull requests.
+The main point is that the `--force` option should be used only when we are certain that it is appropriate. 
+Another common scenario is when sensitive information is accidentally uploaded to a repository and you want to remove all occurrences of it.
+
+`git push --force-with-lease` is a command, which in some companies, is the default option.
+The reason why is that it's a fail-safe. It checks if the branch you're attempting to push to has been updated and sends an error if it has. This gives us an opportunity to `fetch` the work and update our local repository.
+
+## Understanding `git merge`
+
+Here are two `merge` foreplay techniques:
+
+### The Scout Pattern
+The following has been dubbed the _Scout Pattern_ by **Sam Livingston-Gray**. 
+
+In my own words, here is the concept behind the pattern:
+> If you're unsure about what the terrain ahead is like, you essentially send a _scouting party_ ahead to check it out. If they radio back and they're like, "**yo, it's lit**", you'll move ahead and join them. If not, R.I.P to the scouting party.
+
+#### The Steps
+1. Make sure you're on the right branch and that you have a clean working state.
+2. Create a new branch and switch to it.
+3. Do the merge.
+4. Switch to your visualizer and predict how its view will change when you refresh it.
+5. Refresh your visualizer and see whether your prediction was correct.
+6. Are you happy with the result?
+
+If **YEAH**: Move your real branch forward to where the test_merge.
+If **NAH** Delete the test_merge branch.
+
+#### The Walkthrough
+**Scenario:**
+- You're on the `master` branch and you want the changes from the `thiccc_new_feature` branch to be incorporated into `master`.
+- You're not entirely sure if this will be a good idea… so want to try out the merge… but be able to abort it if things don't go smoothly.
+
+**Steps**
+1. **Make sure you're on the right branch and that you have a clean working state.**
+  Whatever visualizer you're using (such as **GitX**), figure out how it shows you where your current branch is.
+  Or, at the command line, type `git status` and you should see something like this:
+  ``` bash
+  # On branch master
+  nothing to commit (working directory clean)
+  ```
+
+2. **Create a new branch and check it out**
+  Type `git checkout -b test_merge`.
+  This switches you over to the new branch created `test_merge` (The `-b` flag enables the creation the new branch).
+  Running `git status` again will show a message confirms which branch you are currently on… `test_merge`.
+
+3. **Do the `merge`**
+  (We are currently on the `test_merge` branch.)
+  Type `git merge thiccc_new_feature`.
+  If you're lucky, there won't be any merge conflicts you can't resolve.
+
+  If you want to **abort the merge** at this point, type `git reset --hard`…
+  Which as a reminder, resets the current branch by pointing `HEAD` at the commit right before it.
+  The `--hard` flag resets the `HEAD`, index **AND** working directory (unlike the `--mixed` (default) and `--soft` resets which change the `HEAD` & Index for `--mixed` and solely the `HEAD` for `--soft`).
+  For this example, it will reset the branch to the state it was in before the merge attempt, which is the same state of the `master` branch at the time `test_merge` was created. The `test_merge` branch still exists though.
+
+  Remember that when you create a new branch in Git, a new commit is not automatically created for that branch. Instead, the new branch is created at the current commit of the branch you are diverging from. This means that the new branch points to the same commit as the original branch at the time of creation and shares the same SHA-1 hash for that commit.
+
+4. **Switch to your visualizer and predict how its view will change when you refresh it.**
+  For example:
+    a. After a merge, you should see a new commit.
+    b. The new commit should have a message like "Merge branch `thiccc_new_feature` into test_merge".
+    c. Your `test_merge` branch label should have moved to this new commit, while the `master` and **thiccc_new_feature** branch labels should still be in the same place.
+
+5. **Refresh your visualizer and see whether your prediction was correct.**
+
+6. **Are you happy with the result?** 
+  If **YEAH**: Move the `master` branch forward to where the `test_merge` branch is with:
+    `git checkout master && git merge test_merge`
+
+  If **NAH**: Drop the `test_merge` branch with:
+    `git checkout master && git branch -d test_merge`
+
+### The Savepoint Pattern
+The following, also conceptualized by **Sam Livingston-Gray**, is the _Savepoint Pattern_.
+
+#### The Steps
+1. Make sure you're on the right branch and that you have a clean working state.
+2. Create a new branch to use as a savepoint, but don't switch to it.
+3. Merge it zaddy.
+4. Switch to your visualizer and predict how its view will change when you refresh it.
+5. Refresh your visualizer and see whether your prediction was correct.
+6. Are you happy with the result?
+  If **YEAH:** Delete the savepoint.
+  If **NAH:** Reset your branch to the savepoint. 
+
+> Unless the last video game you ever played was Super Mario Brothers, it should be obvious why I (S.L.G.) call this one the Savepoint pattern.
+
+#### The Walkthrough
+**Scenario**
+- You're on the `master` branch and you want the changes from the `thiccc_new_feature` branch to be incorporated into `master`.
+- You're substantially certain that you'll want to keep the changes, but you want to be able to abort it if, for example, this feature has unintended side effects.
+
+**Steps**
+1. **Make sure you're on the right branch and that you have a clean working state.**
+
+2. Whatever visualizer you're using, figure out how it shows you where your current branch is. Or, at the command line, type `git status` and you should see something like:
+  ```bash
+  # On branch master
+  nothing to commit (working directory clean)
+  ```
+
+3. **Create a new branch to use as a savepoint, but don't switch to it.**
+  Type `git branch savepoint`. Now if you type `git status` again, you should still see a message that you're on the `master` branch. 
+
+4. **Do the merge**
+  Type `git merge thiccc_new_feature`. If you're lucky, there won't be any merge conflicts you can't resolve.
+  If you want to **abort the merge** at this point, type `git reset --hard`.
+
+5. **Switch to your visualizer and predict how its view will change when you refresh it.**
+  For example:
+    a. After a merge, you should see a new commit.
+    b. The new commit should have a message like "Merge branch `thiccc_new_feature` into master",
+    c. Your `master` branch label should have moved to this commit, while the `thiccc_new_feature` branch label should still be in the same place. 
+
+6. **Refresh your visualizer and see whether your prediction was correct.**
+
+7. Are you content with the result?
+  If **YEAH:** Delete the savepoint via `git branch -d savepoint`
+  If **NAH:**  Reset your branch to the savepoint via `git reset --hard savepoint`
+  If you want to clean up, you can now delete the savepoint with `git branch -d savepoint`.
+
+### Black Belt Merging
+Once comfortable with the _Savepoint pattern_, you might grow tired of creating the savepoint branch, only to have to remember to delete it every time.
+At this point you won't need to create a branch as a savepoint for merges.
+
+Merge commits always wind up with a branch label pointing at them, and one of the branches parent commits will be the commit that that branch label was just moved from.
+
+The upshot is that the commit you started on - the one you would've marked with a savepoint branch - **will always be reachable**.
+
+**Git doesn't care about what you call your branches.**
+> The branch is just there for us puny humans to have some convenient, memorable name pointing to a part of the graph.
+
+At the end fo the _Savepoint pattern_ the command you type to reset your branch to the savepoint is `git reset --hard savepoint` (where "savepoint" is a branch name). If you look at the documentation that comes up when you type `git reset -h`, you'll see that the final argument it takes is called **<commit>**. Older versions of the docuemntation called this **<commit-ish>**, which was a convenient reminder that you could use anything that Git can turn into a SHA-1 hash.
+
+Things Git is happy to accept in a **<commit>** argument include (but are probably not limited to):
+  * Branch names
+  * Tags
+  * Relative references like **HEAD^**, **HEAD^^** or **HEAD~3**
+  * Partial SHA-1 hashes like `9c333696` (you just need to provide a sufficient amount of digits in order to produce a unique hash; Git will fill in the rest).
+  * SHA-1 hashes like `8d434382d9420940be260199a8a058cf468d9037` (these are very easy for Git to turn into SHA-1 hashes!).
+
+So at the end of the _Savepoint pattern_, if you wanted to back out of the merge, you could just as easily use `git log` or your visualizer to find the SHA-1 of the commit. 
+Let's say it starts with `f4cku80085`. 
+If you type `git reset f4cku80085`… Git would behave exactly the same as if you'd remembered to create a branch in the first place.
+
+### `merge` Conflicts
+> Merge conflicts happen when you merge branches that have competing commits, and Git needs your help trying to decide which changes to incorporate in the final merge.
+
+Git can often resolve differences between branches and merge them automatically.
+Usually the changes are on different lines or even in different files, which makes the merge simple for computers to understand; However, sometimes there are competing changes that Git can't resolve without assistance.
+Often, merge conflicts happen when people make different changes to the same line of the same file, or when one person edits a file and another person deletes the same file. 
+
+When pulling form GitHub (`git pull <remote> <branch>`), all merge conflicts need to be resolved.
+If you have a merge conflict between the compare branch and the base branch in your pull request, you can view a list of files with conflicting changes above the **Merge pull request** button. 
+The **Merge pull request button** is deactivated until you've resolved all conflicts between the two branches. 
+
+**Compare and Base Branch Definitions:**
+  * Compare Branch (or HEAD branch): This is the branch that contains the changes you want to merge. It's the branch that you've been working on and will be compared against the base branch.
+  * Base Branch: This is the branch into which you want to merge your changes. It's the target branch of your pull request, often the main or master branch.
+
+#### Resolving Merge Conflicts
+To resolve a merge conflict, you must manually edit the conflicted file to select the changes that you want to keep in the final merge. 
+Here are a couple different methods for doing so:
+  1. If your merge conflict is caused by competing line changes, such as when people make different changes to the same line of the same file on different branches in your Git Repository, you can resolve it on GitHub using the conflict editor. 
+
+    **GitHub Conflict Editor Steps:**
+    (https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github)
+
+      1. Under your repository name, click _Pull Requests_.
+      2. In the "Pull Requests" list, click the pull request with a merge conflict that you'd like to resolve.
+      3. Near the bottom of your pull request, click _Resolve conflicts_.
+        - If this button is deactivated, your pull requests merge conflict is too complex to resolve on GitHub. You must resolve the merge conflict using an alternative Git client, or by using Git on the command line (See https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line).
+      4. Decide if you want to keep only your branches changes, keep only the other branches changes, or make a brand new change, which may incorporate changes from both branches. Delete the conflict markers (`<<<<<<<`, `=======` and `>>>>>>>`) and make the changes you want in the final merge. 
+      5. If you have more than one merge conflict in your file, scroll down to the next set of conflict markers and repeat steps 4 & 5 to resolve your merge conflict. 
+      6. Once you've resolved all the conflicts in the file, click **Mark as resolved**.
+      7. If you have more tha one file with a conflict select the next file you want to edit on the left side of the page under "conflicting files" and repeat steps 4-7 until you've resolved all of your pull requests merge conflicts.
+      8. Once you've resolved all your merge conflicts, click **Commit merge**. This merges the entire base branch into your head branch.
+      9. If prompted, review the branch that you are committing to. 
+      If the head branch is the default branch of the repository (reiterating from above), you can choose either to update this branch with the changes you made to resolve the conflict, or to create a new branch and use this as the head branch of the pull request. 
+      If you choose to create a new branch, enter a name for the branch. 
+      If the head branch of your pull request is protected, you must create a new branch. You won't get the option to update the protected branch.
+      Click **Create branch and update my pull request** or **I understand, continue updating BRANCH**. The button text corresponds to the action you are performing.
+      10. To merge your pull request, click **Merge pull request**. 
+      
+    **More info on GitHub Conflict Editor:**
+      - ⚠️ When you resolve a merge conflict on GitHub, the entire base branch of your pull request is merged into the HEAD branch. This means that you are integrating changes from the base branch into your head branch to resolve conflicts. This process helps ensure that your head branch has all the latest changes from the base branch. Once you resolve the conflicts, you commit the changes to your head branch. This commit will include the conflict resolutions and any changes brought in from the base branch. 
+      - If the head branch is the default branch (e.g., main or master), GitHub might prompt you to create a new branch to serve as the head branch for your pull request to avoid committing directly to the default branch.
+      - If the head branch is protected (i.e., it has certain restrictions to prevent direct modifications), you will need to create a new branch to complete the merge conflict resolution and commit the changes there. 
+
+  2. For all other types of merge conflicts, you must resolve the merge conflict in a local clone of the repository and push the change to your branch on GitHub. You can use the command line or a tool like **GitHub Desktop** to push the change.
+
+    **More info on Merge Conflicts on the Command Line:**
+      - If you have a merge conflict on the command line, you cannot push your local changes to GitHub until you resolve the merge conflict locally on your computer. If you try merging branches on the command line that have a merge conflict, you'll get an error message.
+      - Documentation: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line 
+
+---
+
+## `git cherry-pick`
+`git cherry-pick <commit>` will replay that commit atop our current branch. In other words, when you use ` git cherry-pick`, Git calculates the diff between the specified commit and its parent commit and then applies that diff to the current branch. It will not contain the history of the cherry-picked commits branch. It will come with a new commit message that _may be based on the original commit's message_… to give futher importance to the content of the commit message. 
+
+### Using `git cherry-pick` to simulate `git rebase`
+Once you have `git cherry-pick` down, you can start off by thinking of `git rebase` as being a faster way to cherry-pick all of the commits in a given branch at once, rather than having to type out their IDs separately. 
+Obviously, as seen above, `rebase` is far more powerful than just this capability.
+
+In the following, the reason why we create a new branch before our `cherry-pick`ing (instead of just cherrypicking directly atop the `master` branch) are for the following reasons:
+  1. **Safety and Experimentation:**
+    Creating a new branch ensures that you don't alter the `master` branch until you're sure the `cherry-pick` operation is successful and doesn't introduce any issues. It provides a safe environment to test the changes. 
+
+  2. **Avoiding Conflicts:**
+    By working on a separate branch, you can resolve any conflicts without affecting the `master` branch.
+    Once everything is resolved and tested, you can merge the changes into `master`. 
+
+  3. **Preservation of Original State:**
+    Keeping the `master` branch unchanged allows you to easily revert to its original state if something goes wrong during the `cherry-pick` operation. You can compare the changes or switch back without any hassle. 
+
+### Visual Walkthrough
+#### Initial Commit History
+Assume we have the following commit history:
+```plaintext
+A -- B -- C -- D  (master)
+       \
+        E -- F -- G  (feature)
+```
+
+We want to rebase the `feature` branch onto `master`.
+
+#### Step-by-Step Simulation Using `git cherry-pick`
+1. **Checkout `master` and create a new branch to hold the rebased commits:**
+   ```bash
+   git checkout master
+   git checkout -b feature-rebased
+   ```
+
+   The state of the branches is now:
+   ```plaintext
+   A -- B -- C -- D  (master, feature-rebased)
+       \
+        E -- F -- G  (feature)
+   ```
+
+2. **Cherry-pick each commit from `feature` onto `feature-rebased`:**
+   ```bash
+   git cherry-pick E
+   git cherry-pick F
+   git cherry-pick G
+   ```
+
+   After cherry-picking `E`:
+   ```plaintext
+   A -- B -- C -- D -- E'  (feature-rebased)
+       \
+        E -- F -- G  (feature)
+   ```
+
+   After cherry-picking `F`:
+   ```plaintext
+   A -- B -- C -- D -- E' -- F'  (feature-rebased)
+       \
+        E -- F -- G  (feature)
+   ```
+
+   After cherry-picking `G`:
+   ```plaintext
+   A -- B -- C -- D -- E' -- F' -- G'  (feature-rebased)
+       \
+        E -- F -- G  (feature)
+   ```
+
+#### Explanation:
+- **Commit `E'`** is a new commit on `feature-rebased` that has the same changes as commit `E` from `feature`.
+- **Commit `F'`** is a new commit on `feature-rebased` that has the same changes as commit `F` from `feature`.
+- **Commit `G'`** is a new commit on `feature-rebased` that has the same changes as commit `G` from `feature`.
+
+#### Summary:
+We have effectively rebased the `feature` branch onto `master` by cherry-picking each commit from `feature` onto a new branch `feature-rebased` that starts from `master`.
+
+#### Final Step (Optional):
+To complete the rebase, you might want to move the `feature` branch to the new rebased position:
+```bash
+git branch -f feature feature-rebased
+git checkout feature
+```
+
+Now the branches look like:
+```plaintext
+A -- B -- C -- D -- E' -- F' -- G'  (master, feature)
+       \
+        E -- F -- G  (old-feature)
+```
+
+You can delete the temporary `feature-rebased` branch if desired:
+```bash
+git branch -d feature-rebased
+```
+
+#### Visual Summary:
+1. **Initial State:**
+   ```plaintext
+   A -- B -- C -- D  (master)
+          \
+           E -- F -- G  (feature)
+   ```
+
+2. **After Creating `feature-rebased`:**
+   ```plaintext
+   A -- B -- C -- D  (master, feature-rebased)
+          \
+           E -- F -- G  (feature)
+   ```
+
+3. **After Cherry-Picking Commits `E`, `F`, and `G`:**
+   ```plaintext
+   A -- B -- C -- D -- E' -- F' -- G'  (feature-rebased)
+          \
+           E -- F -- G  (feature)
+   ```
+
+4. **Move `feature` to New Rebasing Position (Optional):**
+   ```plaintext
+   A -- B -- C -- D -- E' -- F' -- G'  (master, feature)
+          \
+           E -- F -- G  (old-feature)
+   ```
+By cherry-picking each commit from the `feature` branch onto a new branch starting from `master`, we've manually simulated the rebase operation.
+
+#### When to Use a New Branch
+Creating a new branch (`feature-rebased`) before cherry-picking the commits is particularly useful in the following scenarios:
+  * **Complex Rebase Operations**:
+    If you're dealing with many commits or potential conflicts, having a separate branch helps isolate the changes.
+  * **Review and Testing:** 
+    You can review and test the changes on the new branch before merging them into `master`.
+  * **Team Collaboration:** 
+    In a collaborative environment, working on a new branch allows other team members to continue their work on `master` without disruption.
+
+After ensuring that everything works correctly on the new branch (`feature rebased`), you can merge it into `master`:
+```bash
+git checkout master
+git merge feature-rebased
+```
+
+This way, the changes are safely incorporated into `master`.
+While yes, you can `cherry-pick` directly atop `master`, creating a branch first provides a safer, more flexible workflow.
+It allows you to handle conflicts, review changes, and test thoroughly before merging into the main branch. 
+
+This final step is comparable to our _fast-forward merge operation_ post rebasing…
+When you perform a `git rebase`, Git effectively changes the parent of the first commit of the branch being rebased to point to the `HEAD` of the branch you are rebasing onto. This process involves creating new commits that are identical to the original commits, but with a different parent commit.
+
+---
+
+
+## Using Git in the Real World
+The key to learning Git is like learning anything else. 
+It's one thing to read about the shit. 
+It's another to do the shit.
+
+### Conventional Commits
+
+### Seven Rules of a Thiccc Git Commit Message
+1. Separate subject from body with a blank line.
+2. Limit the subject line to 50 characters.
+3. Capitalize the beginning of all subject lines with a capital letter.
+4. Do not end the subject line with a period.
+5. Use the imperative mood in the subject line.
+6. Wrap the body at 72 characters.
+7. Use the body to explain _what_ and _why_ vs. _how_.
+
+### Commit Message Template
+```bash
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+#### Types & Rules
+  - **fix:** a commit for the this type patches a bug in your codebase (this correlates with **PATCH** in Semantic Versioning).
+  - **feat:** a commit of this type introduces a new feature to the codebase (this correlates with **MINOR** in Semantic Versioning).
+  - **BREAKING CHANGE:** a commit that has a footer `BREAKING CHANGE:`, or appends a `!` after type/scope, introduces a breaking API change (correlating with **MAJOR** in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
+  - <type>'s other than `fix:` and `feat:` are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends `build:` `chore:`, `ci:`. `docs:`, `style:`, `refactor:`, `perf:`, `test` and others.
+  - Footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to ![git trailer format](https://git-scm.com/docs/git-interpret-trailers).
+
+A breaking change refers to a modification in the code that introduces changes incompatible with previous versions of
+the software. This means that the new version of the software will not work with the old version's code without requiring changes from the users of the software.
+
+In the context of Conventional Commits, the `scope` is an optional part of the commit message that specifies the section or part of the codebase that the commit affects. It helps to give more context about what part of the project the change pertains to, making it easier for developers to understand what areas of the code are impacted by the commit.
+
+Here’s how the `scope` fits into the commit message format:
+
+```
+<type>[optional scope]: <description>
+```
+
+#### Scope Parameters
+  - **auth**: For changes related to authentication.
+    ```
+    feat(auth): add OAuth2 support
+    ```
+
+  - **api**: For changes related to the API.
+    ```
+    fix(api): handle edge case in endpoint
+    ```
+
+  - **ui**: For changes related to the user interface.
+    ```
+    style(ui): improve button styles
+    ```
+
+  - **docs**: For changes related to documentation.
+    ```
+    docs(readme): update usage instructions
+    ```
+
+  - **build**: For changes related to the build system or dependencies.
+    ```
+    chore(build): update webpack configuration
+    ```
+
+  - **tests**: For changes related to tests.
+    ```
+    test(unit): add tests for new feature
+    ```
+
+Using scopes helps in organizing and understanding the commit history, especially in larger projects where multiple areas of the codebase are maintained by different teams or individuals. It provides a more granular context to the changes being made.
+
+Examples & More Info: ![Commit Message Examples](https://www.conventionalcommits.org/en/v1.0.0/#examples)
+
+### Contributing to Open Source 
+For small changes to an open source repository, it is typically okay to directly make a pull request. 
+Otherwise, start some shit and create an issue. 
+To do so, navigate to the main page of the repository, click **Issues**, click **New issue**, then follow the rest of the steps. You can also create an issue with GitHub CLI via the `gh issue create` subcommand. To skip the interactive prompts, include the `--body` and the `--title` flags.
+Here are a couple examples of how it might look when creating an issue from the command line:
+``` bash 
+gh issue create --title "My problem with this shit" --body "Honestly, it isn't giving."
+
+gh issue create --title "My Other Issue" --body "Here are more details." --assignee @me,deeznuts --label "bug, help me zaddy" --project onboarding --milestone "learning codebase"
+```
+
+**Here some considerations and best practices to keep in mind:**
+
+**When It's Usually Okay to Directly Make a PR:**
+1. **Small Fixes**:
+  * **Typo Corrections** - fixing typos in documentation or comments.
+  * **Minor Documentation Updates** - improving or clarifying existing documentation.
+  * **Simple Bug Fixes** - addressing minor bugs that are straightforward to resolve.
+
+2. **Non-Controversial Changes:**
+  * Change that are unlikely to cause disagreements or require significant discussion.
+  * Code style improvements that align with the existing coding conventions of the project.
+
+**When You Should Consider Opening an Issue First:**
+1. **Significant Changes:**
+  * **New Features** - proposing new features or significant modifications.
+  * **Refactoring** - Large-scale code restructuring or refactoring.
+  * **Behavioral Changes** - alterations that change the behavior of the code in a noticeable way.
+
+2. **Unclear Impact:**
+  * When you are unsure about the impact of your change or how it might fit with the projects goals are architecture.
+
+3. **Project Guidelines:**
+  * Some projects have specific guidelines requesting contributors to open an issue before making a PR, regardless of the changes size. Always check the projects contribution guidelines.
+
+#### Best Practices
+1. **Check Contribution Guidelines:**
+  * Always read and follow the projects contribution guidelines. They often provide specific instructions on how to contribute, including whether an issue should be opened before a PR.
+2. **Small Commits:**
+  * Make small, atomic commits that are easy to review and understand. This makes it easier for maintainers to review your PR.
+3. **Descriptive PR Descriptions:**
+  * Clearly describe what your PR does, why it's needed, and any relevant context. Even for small changes, a well-written PR description can help maintainers understand the purpose of your contribution.
+4. **Link to Related Issues:** 
+  * If your PR addresses an existing issue, make sure to link to that issue in your PR description. This helps maintainers track the relationship between issues and PRs. 
+
+#### Example of a Small Fix PR Description
+```markdown
+### Summary
+
+This PR fixes a typo in the README file.
+
+### Description
+
+Corrected the spelling of "accomodate" to "accommodate" in the "installation" section.
+
+### Checklist
+
+- [x] Documentation updated (if necessary)
+```
+
+#### Example of When to Open an Issue First  
+If you are proposing a new feature or a significant change, you might open an issue like this:
+```markdown
+### Feature Request: Add Dark Mode Support
+**Is your feature request related to a problem? Please describe.**
+Some users prefer a dark mode to reduce eye strain in low-light environments.
+
+**Describe the solution you'd like**
+Add a dark mode toggle that switches the UI theme to a darker color palette.
+
+**Describe alternatives you've considered**
+Using browser extensions for dark mode, but native support would be more integrated and user-friendly.
+
+**Additional context**
+Would like to discuss the preferred implementation approach before proceeding with the PR.
+```
+
+#### The PR Workflow
+The key players in this story will be the `upstream` (the original GitHub repository), the `origin` (your fork of that repository), and the "local" repository (your local clone of `origin`). Think of it as a happy triangle, except that "local" can only pull from `upstream`, not push.
+
+Here is the typical workflow:
+1. **Fork the Original Repository (Upstream):**
+  - On GitHub, fork the original repository. This creates a copy of it under your GitHub about known as `origin`.
+  - This creates a copy of the repository under your GitHub account, allowing you to push changes without affecting the original repository directly.
+
+2. **Clone Your (Origin) Locally:**
+  - Clone your fork to your local machine:
+    ```bash
+    git clone https://github.com/yourusername/original-repo.git
+    cd original-repo
+    ```
+    
+3. **Set Upstream Remote:**
+  - Add the original repository as the `upstream` remote:
+    ```bash
+    git remote add upstream https://github.com/originalauthor/original-repo.git
+    ```
+  - This allows you to fetch updates from the original repository, ensuring your fork stays up to date with any changes  made by the original authors.
+
+4. **Create a New Branch:**
+  - Create a new branch for your changes:
+    ```bash
+    git checkout -b my-feature-branch
+    ```
+  - Branching ensures that your changes are isolated from the main codebase until they are reviewed and merged.
+
+5. **Make Changes Locally:**
+  - Make your changes and commit them locally:
+    ```bash
+    git add . 
+    git commit -m "Change this shit and that shit"
+    ```
+
+6. **Push Changes to Your Fork (Origin):**
+  - Push your changes to your fork on GitHub:
+    ```bash
+    git push origin my-feature-branch
+    ```
+
+7. **Create a Pull Request to the Original Repository (Upstream):**
+  - On GitHub. navigate to your fork (`origin`) and you will see an option to create a pull request. Ensure the PR is directed from your branch (`my-feature-branch` on `origin`) to the appropriate branch (often `main` or `develop`) on the `upstream` repository.
+  - A PR notifies the maintainers of the original repository about your changes and allows them to review, provide feedback and eventually merge your changes.
+
+#### Keeping Your Forkin` Fork Up to Date
+Updating your fork and keeping it in sync with the upstream repository is generally considered a good practice for a plethora of reasons. Even if you are not immediately applying your branch atop it.
+
+**Reasons to Update Your Fork:** 
+1. Stay Up-to-Date with Upstream Changes:
+  - Keeping your fork updated ensures you have the latest bug fixes, features and improvements from the upstream repository. This can help you avoid duplicating work that has already been done by others.
+
+2. Reduce Merge Conflicts:
+  - By regularly syncing your fork with the upstream repository, you minimize the risk of running into large merge conflicts later. Smaller, more frequent updates are easier to manage and resolve.
+
+3. Maintain Compatibility:
+  - Ensuring your local repository is compatible with the latest upstream changes helps maintain compatibility with the main codebase. This is particularly important if the upstream repository is actively developed and your feature branch might interact with other parts of the codebase.
+
+4. Simplify Collaboration:
+  - If you are collaborating with others, keeping your fork updated ensures everyone is working with the same base code, reducing confusion and potential issues arising from outdated code.
+
+To keep your fork in sync with the upstream repository, you can use the following commands:
+
+1. **Fetch Changes from Upstream**
+```bash
+git fetch upstream
+```
+
+2. **Merge Changes into Your Local Branch:**
+```bash
+git checkout main
+git merge upstream/main
+```
+
+3. **Push Updates to Your Fork:**
+```bash
+git push origin main
+```
+
+4. **(Optional) Rebase Your Feature Branch:**
+```bash
+git checkout my-feature-branch
+git rebase main
+```
+Resolve any conflicts that arise during the rebase process.
+
+You could also push your branch to `origin` without rebasing first; However, not without some implications. This is not to say that it isn't viable workflow, as this method is demonstrated in The Odin Projects official documentation regarding pull requests. These implications include, but are not limited to: potential merge conflicts, outdated changes, less clean commit history. Rebasing prior gives us the opportunity to test your branch with the latest changes from the upstream repository before making your pull request. 
+
+#### Process Overview (18+, this section is a little vulgar)
+1. Once you have the repo forked and cloned, and the upstream remote has been set, you can begin working on your issue.
+2. Create and check out your branch and get to fuckin' on those keys.
+3. Commit often as you work.
+4. Sync your work with the upstream remote every so _any_ chance you get.
+5. When you're ready to play with others/submit your work for integration, you can either push your branch to the forkin' (forked) repo… or you can apply your work atop the main branch via `rebase`, and handle any conflicts before shoving it up `origin`'s ass (your remote forked repository) via `push`. 
+6. After pushing that shit, go to your forked repo on the Hub (No. Not that one. GitHub), and click the **Compare & pull request** button. If you have multiples of this button, be sure to click the one for the correct branch. If you don't see the button, click the branch drop down menu and then select the branch you just pushed from your local clone.
+7. Once you have switched to the correct branch on GitHub. click the "Contribute" dropdown and then click the **Open Pull Request** button.
+8. If there is a PR template, fill it out completely & correctly (Not adhering to the templates guidelines will delay the integration of your work and get your maintainers tight).
+9. **Submit Dat Shit!**
+10. Go for a walk and wait for a a wild maintainer to appear, responding either with comments, change requests or dopamine notifications (approval followed by a merge).
+
+🥸 MK: "Get stamps. for internat."

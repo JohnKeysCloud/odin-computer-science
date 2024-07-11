@@ -10,9 +10,9 @@ class Tree {
     if (start > end) return null;
 
     const middleIndex = Math.floor((start + end) / 2);
-    const value = sortedArray[middleIndex];
+    const middleValue = sortedArray[middleIndex];
     const node = {
-      value: value,
+      value: middleValue,
       left: null,
       right: null
     };

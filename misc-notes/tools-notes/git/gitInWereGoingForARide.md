@@ -294,7 +294,7 @@ It is imperative to _rewrite history_ in a safe and responsible manner.
 
 ---
 
-## Changing Multiple Commmits: `git rebase`
+## Changing Multiple Commits: `git rebase`
 **VSCode Tutorial**
 
 `git rebase` works by:
@@ -428,7 +428,7 @@ Here's a breakdown:
 
 ### A Helpful Mnemoic for `git rebase`
 A helpful mnemonic for `git rebase` arguments (by **Sam Livingston-Gray**):
-  The two following command chains are identical in behavior: 
+  The two following command chains are identical in _behavior_ (not in result): 
 
   1. ```bash 
       #{1}
@@ -478,12 +478,12 @@ If we wanted to remove a commit, we would remove it from the list via `drop`, an
 #### `reflog`
 If we accidentally drop a commit during an interactive rebase, the commit is immediately lost.
 Git keeps a reference to the commit for a while (typically a couple of weeks) in a mechanism called the **reflog**. 
-This allows use to recover the commit if needed.
-We use the reflog to find the commit's SHA {1} and then reset your branch to that commit. 
+This allows us to recover the commit if needed.
+We use the reflog to find the commit's SHA {1} and then reset our branch to that commit. 
 
 The general steps are:
   1. Find the SHA of the dropped commit using `git reflog`.
-  2. Reset your branch to that commmit using `git reset --hard <SHA>`.
+  2. Reset your branch to that commit using `git reset --hard <SHA>`.
 Be cautious with `git reset --hard`, as it will remove any changes in your working directory and staging area. 
 If you're unsure, you can use `git reset --soft <SHA>` to reset the branch to the dropped commit without affecting your working directory or staging area.
 
@@ -495,7 +495,7 @@ Using `squash` for our commits is a very handy way of keeping our Git history ti
 It's important to know how to `squash` because this process may be the standard on some development teams.
 Squashing makes it easier for others to understand the history of your project. 
 
-What often happens when a feature is merged, is we end up with some visually complex logs of all the changes a feature branch had a main branch. These commits are important while the feature is in development, but aren't really necessary when looking thorugh the entire history of your main branch. 
+What often happens when a feature is merged, is we end up with some visually complex logs of all the changes a feature branch had a main branch. These commits are important while the feature is in development, but aren't really necessary when looking through the entire history of your main branch. 
 
 Lets say we have 3 commits in the current repository and we want to `squash` the second commit into the first commit on the list.
 
@@ -597,7 +597,7 @@ Commit message
   * **tree:** The SHA-1 hash of the tree object for this commit, which represents the state of the directory structure and the content of the files at the time of the commit.
   * **parent:** The SHA-1 hash of the parent commit. A commit can have zero (initial commit), one (regular commit), or multiple (merge commit) parent references.
   * **author:** the name and email of the author, along with the timestamp of when the commit was originally made. 
-  * **commmitter:** the name and email of the author, along with the timestamp of the commit. The author and committer can be different in cases like patches applied by a maintainer.
+  * **committer:** the name and email of the author, along with the timestamp of the commit. The author and committer can be different in cases like patches applied by a maintainer.
   * **Commit message:* the message describing the changes mde in this commit.
 
   * **Practical Use** 
@@ -677,14 +677,14 @@ Here's a breakdown:
   This command is useful for:
     - Inspecting the details of files in the staging area.
     - Debugging issues related to the index, such as understanding the state of files during a merge conflict.
-    - Verifying the exact versions of files that are staged for the next commmit.
+    - Verifying the exact versions of files that are staged for the next commit.
     - The `-s` flag with `git ls-files` provides a detailed view of the staging area, which can be helpful when we need more information other than the filenames and want to understand the specifics of the staged content. 
 
 #### The Working Directory
 Also referred to as the "working tree".
 The other two trees store their content in an efficient but unconventional manner… inside the `.git` folder.
 The working directory unpacks them into actual files, which makes it much easier for you to edit them.
-Think of the working directory as a **sandbox**, where you can try changes out before adiing them to your staging area (index) and then to history.
+Think of the working directory as a **sandbox**, where you can try changes out before adding them to your staging area (index) and then to history.
 
 For example:
 ``` bash
@@ -801,8 +801,8 @@ For example, you're working on a project where:
 
 The second commit was a work in progress and you want to squash it down.
 
-Performing `git reset --soft HEAD~2` moves the HEAD branch back to an older commit (the most recent commmit you want to keep).
-Simply running `git commit` again from this point gives us a squashed commmit that has the new file AND the first file we modified to create the third commit originally. 
+Performing `git reset --soft HEAD~2` moves the HEAD branch back to an older commit (the most recent commit you want to keep).
+Simply running `git commit` again from this point gives us a squashed commit that has the new file AND the first file we modified to create the third commit originally. 
 But now there are two commits, down from three. The previous second commit that we squashed is no longer in the history.
 
 ### `reset` Summary & Cheat Sheet
@@ -999,11 +999,10 @@ Commit `E` points back to `D` which is the initial commit on the feature branch 
   **Command:** `git reset --hard B` (assuming you are on `main`)
 
   ```
-  A -- B (main)
+  A -- B (main) <- HEAD
         \
          D -- E (feature)
-             ^
-            HEAD
+
   ```
 
   - `main` now points to commit `B`.
@@ -1150,6 +1149,8 @@ If **NAH** Delete the test_merge branch.
   If **NAH**: Drop the `test_merge` branch with:
     `git checkout master && git branch -d test_merge`
 
+   > 💭 So, basically… and precisely, if a feature branch is rebased before attempting a merge, the developer can handle potential merge conflicts before they would arise in a direct merge of feature into the master branch. This proactive approach results in an optimal state for submitting a pull request. Maintainers will appreciate this when reviewing the PR, as it makes the specific changes clear and maintains a clean commit history. - JKC
+
 ### The Savepoint Pattern
 The following, also conceptualized by **Sam Livingston-Gray**, is the _Savepoint Pattern_.
 
@@ -1199,18 +1200,22 @@ The following, also conceptualized by **Sam Livingston-Gray**, is the _Savepoint
   If **NAH:**  Reset your branch to the savepoint via `git reset --hard savepoint`
   If you want to clean up, you can now delete the savepoint with `git branch -d savepoint`.
 
+💭 > With the "savepoint pattern" in mind, it's accurate to say that this method provides a "save" in the essence of modern video games. WE create a "saved-state" (branch) that WE can revert to in case WE mess up in the current state of the "game" (via merging). If things go wrong, WE can reset to that previous save game state using `git reset --hard saved-state`. If things work out, WE can simply delete the saved state via `git branch -d saved-state`.
+
 ### Black Belt Merging
 Once comfortable with the _Savepoint pattern_, you might grow tired of creating the savepoint branch, only to have to remember to delete it every time.
 At this point you won't need to create a branch as a savepoint for merges.
 
-Merge commits always wind up with a branch label pointing at them, and one of the branches parent commits will be the commit that that branch label was just moved from.
+Merge commits always wind up with a branch label pointing at them, and one of the branches parent commits will be the commit that that branch label was just moved from. 
+
+> 💭 A brief exemplification: After a merge commit, `HEAD^` will point to the first parent, which is typically the branch where the merge was performed (i.e., `master`). `HEAD^^` _or_ `HEAD^2` refers to the second parent, which is the branch that was integrated or merged into the first branch.
 
 The upshot is that the commit you started on - the one you would've marked with a savepoint branch - **will always be reachable**.
 
 **Git doesn't care about what you call your branches.**
 > The branch is just there for us puny humans to have some convenient, memorable name pointing to a part of the graph.
 
-At the end fo the _Savepoint pattern_ the command you type to reset your branch to the savepoint is `git reset --hard savepoint` (where "savepoint" is a branch name). If you look at the documentation that comes up when you type `git reset -h`, you'll see that the final argument it takes is called **<commit>**. Older versions of the docuemntation called this **<commit-ish>**, which was a convenient reminder that you could use anything that Git can turn into a SHA-1 hash.
+At the end of the _Savepoint pattern_ the command you type to reset your branch to the savepoint is `git reset --hard savepoint` (where "savepoint" is a branch name). If you look at the documentation that comes up when you type `git reset -h`, you'll see that the final argument it takes is called **<commit>**. Older versions of the docuemntation called this **<commit-ish>**, which was a convenient reminder that you could use anything that Git can turn into a SHA-1 hash.
 
 Things Git is happy to accept in a **<commit>** argument include (but are probably not limited to):
   * Branch names
@@ -1223,6 +1228,8 @@ So at the end of the _Savepoint pattern_, if you wanted to back out of the merge
 Let's say it starts with `f4cku80085`. 
 If you type `git reset f4cku80085`… Git would behave exactly the same as if you'd remembered to create a branch in the first place.
 
+> So… when running `git merge feature` from branch `main` for example, the `feature` branch pointer isn't moving at all. We are creating a new merge commit on branch `main` that integrates the changes introduced in the `feature` branch,
+
 ### `merge` Conflicts
 > Merge conflicts happen when you merge branches that have competing commits, and Git needs your help trying to decide which changes to incorporate in the final merge.
 
@@ -1230,7 +1237,7 @@ Git can often resolve differences between branches and merge them automatically.
 Usually the changes are on different lines or even in different files, which makes the merge simple for computers to understand; However, sometimes there are competing changes that Git can't resolve without assistance.
 Often, merge conflicts happen when people make different changes to the same line of the same file, or when one person edits a file and another person deletes the same file. 
 
-When pulling form GitHub (`git pull <remote> <branch>`), all merge conflicts need to be resolved.
+When pulling from GitHub (`git pull <remote> <branch>`), all merge conflicts need to be resolved.
 If you have a merge conflict between the compare branch and the base branch in your pull request, you can view a list of files with conflicting changes above the **Merge pull request** button. 
 The **Merge pull request button** is deactivated until you've resolved all conflicts between the two branches. 
 
@@ -1354,7 +1361,7 @@ We want to rebase the `feature` branch onto `master`.
 #### Summary:
 We have effectively rebased the `feature` branch onto `master` by cherry-picking each commit from `feature` onto a new branch `feature-rebased` that starts from `master`.
 
-#### Final Step (Optional):
+#### Optional Step:
 To complete the rebase, you might want to move the `feature` branch to the new rebased position:
 ```bash
 git branch -f feature feature-rebased
@@ -1363,7 +1370,7 @@ git checkout feature
 
 Now the branches look like:
 ```plaintext
-A -- B -- C -- D -- E' -- F' -- G'  (master, feature)
+A -- B -- C -- D -- E' -- F' -- G'  (master, feature-rebased, feature)
        \
         E -- F -- G  (old-feature)
 ```
@@ -1372,6 +1379,8 @@ You can delete the temporary `feature-rebased` branch if desired:
 ```bash
 git branch -d feature-rebased
 ```
+
+This command leaves old-feature dangling if the commits of the branch are not referenced by another branch or tag. This also makes the commits of the unreferenced branch eligible to be processed by Git's garbage collection.
 
 #### Visual Summary:
 1. **Initial State:**
@@ -1426,7 +1435,6 @@ This final step is comparable to our _fast-forward merge operation_ post rebasin
 When you perform a `git rebase`, Git effectively changes the parent of the first commit of the branch being rebased to point to the `HEAD` of the branch you are rebasing onto. This process involves creating new commits that are identical to the original commits, but with a different parent commit.
 
 ---
-
 
 ## Using Git in the Real World
 The key to learning Git is like learning anything else. 
@@ -1508,8 +1516,9 @@ Examples & More Info: ![Commit Message Examples](https://www.conventionalcommits
 
 ### Contributing to Open Source 
 For small changes to an open source repository, it is typically okay to directly make a pull request. 
+
 Otherwise, start some shit and create an issue. 
-To do so, navigate to the main page of the repository, click **Issues**, click **New issue**, then follow the rest of the steps. You can also create an issue with GitHub CLI via the `gh issue create` subcommand. To skip the interactive prompts, include the `--body` and the `--title` flags.
+To do so, navigate to the main page of the repository, click **Issues**, click **New issue**, then follow the rest of the steps. You can also create an issue with GitHub CLI via the `gh issue create` subcommand. To skip the interactive prompts, include the `--title` and the `--body` flags.
 Here are a couple examples of how it might look when creating an issue from the command line:
 ``` bash 
 gh issue create --title "My problem with this shit" --body "Honestly, it isn't giving."
@@ -1526,13 +1535,13 @@ gh issue create --title "My Other Issue" --body "Here are more details." --assig
   * **Simple Bug Fixes** - addressing minor bugs that are straightforward to resolve.
 
 2. **Non-Controversial Changes:**
-  * Change that are unlikely to cause disagreements or require significant discussion.
+  * Changes that are unlikely to cause disagreements or require significant discussion.
   * Code style improvements that align with the existing coding conventions of the project.
 
 **When You Should Consider Opening an Issue First:**
 1. **Significant Changes:**
   * **New Features** - proposing new features or significant modifications.
-  * **Refactoring** - Large-scale code restructuring or refactoring.
+  * **Refactoring** - large-scale code restructuring or refactoring.
   * **Behavioral Changes** - alterations that change the behavior of the code in a noticeable way.
 
 2. **Unclear Impact:**
@@ -1672,16 +1681,18 @@ Resolve any conflicts that arise during the rebase process.
 
 You could also push your branch to `origin` without rebasing first; However, not without some implications. This is not to say that it isn't viable workflow, as this method is demonstrated in The Odin Projects official documentation regarding pull requests. These implications include, but are not limited to: potential merge conflicts, outdated changes, less clean commit history. Rebasing prior gives us the opportunity to test your branch with the latest changes from the upstream repository before making your pull request. 
 
-#### Process Overview (18+, this section is a little vulgar)
+#### Process Overview 
 1. Once you have the repo forked and cloned, and the upstream remote has been set, you can begin working on your issue.
 2. Create and check out your branch and get to fuckin' on those keys.
 3. Commit often as you work.
 4. Sync your work with the upstream remote every so _any_ chance you get.
 5. When you're ready to play with others/submit your work for integration, you can either push your branch to the forkin' (forked) repo… or you can apply your work atop the main branch via `rebase`, and handle any conflicts before shoving it up `origin`'s ass (your remote forked repository) via `push`. 
-6. After pushing that shit, go to your forked repo on the Hub (No. Not that one. GitHub), and click the **Compare & pull request** button. If you have multiples of this button, be sure to click the one for the correct branch. If you don't see the button, click the branch drop down menu and then select the branch you just pushed from your local clone.
+6. After pushing that shit, go to your forked repo on the Hub (No. Not that one. GitHub), and click the **Compare & pull request** button. If you have multiples of this button, click the one for the correct branch. If you don't see the button, click the branch drop down menu and then select the branch you just pushed from your local clone.
 7. Once you have switched to the correct branch on GitHub. click the "Contribute" dropdown and then click the **Open Pull Request** button.
 8. If there is a PR template, fill it out completely & correctly (Not adhering to the templates guidelines will delay the integration of your work and get your maintainers tight).
 9. **Submit Dat Shit!**
 10. Go for a walk and wait for a a wild maintainer to appear, responding either with comments, change requests or dopamine notifications (approval followed by a merge).
+
+---
 
 🥸 MK: "Get stamps. for internat."

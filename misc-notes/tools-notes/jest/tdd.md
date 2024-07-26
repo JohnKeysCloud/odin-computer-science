@@ -511,12 +511,7 @@ import flickrFetcher from 'flickr-fetcher.js'
 
 test('flickrFetcher exists', () => {
   expect(flickrFetcher).toBeDefined();
-  expect('photoObjToURL()', () => {
-
-  });
 });
-
-test('')
 ```
 
 This test is super simple. It does nothing other than check that ifx default export from `flickr-fetcher.js` exists. If it is defined to be exact (anything but `undefined`).
@@ -634,6 +629,254 @@ export default {
 };
 ```
 
+After making these changes, my tests run automatically (due to my neat Jest `watch` script)… and we have reached **Step 2 - Green**. 
+
+We successfully created an almost useless function that passes the test. This is quite the point of this step though. We want to only write enough code to make the test pass. No more. It takes a lot of discipline to _only_ write the bare minimum code. Of course you will have times where you _just know_ how to write the code, and have many ways of applying optimal efficiency and elegance. You must restrain yourself.
+
+Lets continue. This function is not complete. What if we pass it another photo object? Let's find out by writing another test:
+
+```javascript
+// flickr-fetcher.test.js
+
+import flickrFetcher from './flickr-fetcher.js';
+
+test('flickrFetcher exists', () => {
+  expect(flickrFetcher).toBeDefined();
+});
+
+test('photoObjToURL() takes photo object 1 and returns a URL', () => {
+  const input = {
+    id:       '25373736106',
+    owner:    '99117316@N03',
+    secret:   '146731fcb7',
+    server:   '1669',
+    farm:     2,
+    title:    'Dog goes to desperate measure to avoid walking on a leash',
+    ispublic: 1,
+    isfriend: 0,
+    isfamily: 0
+  };
+  const actual = flickrFetcher.photoObjToUrl(input);
+  const expected = 'https://farm2.staticflickr.com/1669/25373736106_146731fcb7_b.jpg';
+
+  expect(actual).toBe(expected);
+});
+
+test('photoObjToURL() takes photo object 2 and returns a URL', () => {
+  const input = {
+    id:       '24765033584',
+    owner:    '27294864@N02',
+    secret:   '3c190c104e',
+    server:   '1514',
+    farm:     2,
+    title:    'the other cate',
+    ispublic: 1,
+    isfriend: 0,
+    isfamily: 0
+  };
+  const actual = flickrfetcher.photoObjToURL(input);
+  const expected = 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg';
+ 
+ expect(actual).toBe(expected);
+});
+```
+
+This second test fails obviously.
+But what is the simplest way to get the tests to pass?
+A fuckin' `if` statement.
+Let's modify our function, shall we:
+
+```javascript
+export default {
+  photoObjToURL: () => { 
+    if (photoObj.id === '25373736106') {
+      return 'https://farm2.staticflickr.com/1669/25373736106_146731fcb7_b.jpg';
+    }
+    return 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg';
+  }
+};
+```
+
+Would you look at that! **Green**! If this is feeling excessive to you this point, lets think about the following step, refactoring. Could this code be any more efficient to pass these tests? Not _really_. 
+But is there any duplication here? 
+The answer is yet. But let's add one more test:
+
+```javascript
+// flickr-fetcher.test.js
+
+import flickrFetcher from './flickr-fetcher.js';
+
+test('flickrFetcher exists', () => {
+  expect(flickrFetcher).toBeDefined();
+});
+
+test('photoObjToURL() takes photo object 1 and returns a URL', () => {
+  const input = {
+    id:       '25373736106',
+    owner:    '99117316@N03',
+    secret:   '146731fcb7',
+    server:   '1669',
+    farm:     2,
+    title:    'Dog goes to desperate measure to avoid walking on a leash',
+    ispublic: 1,
+    isfriend: 0,
+    isfamily: 0
+  };
+  const actual = flickrFetcher.photoObjToUrl(input);
+  const expected = 'https://farm2.staticflickr.com/1669/25373736106_146731fcb7_b.jpg';
+
+  expect(actual).toBe(expected);
+});
+
+test('photoObjToURL() takes photo object 2 and returns a URL', () => {
+  const input = {
+    id:       '24765033584',
+    owner:    '27294864@N02',
+    secret:   '3c190c104e',
+    server:   '1514',
+    farm:     2,
+    title:    'the other cate',
+    ispublic: 1,
+    isfriend: 0,
+    isfamily: 0
+  };
+  const actual = flickrfetcher.photoObjToURL(input);
+  const expected = 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg';
+ 
+ expect(actual).toBe(expected);
+});
+
+test('photoObjToURL() takes a photo object 3 and returns a URL', () => {
+  const input = {
+    id:       '24770505034',
+    owner:    '97248275@N03',
+    secret:   '31a9986429',
+    server:   '1577',
+    farm:     2,
+    title:    'Some pug picture',
+    ispublic: 1,
+    isfriend: 0,
+    isfamily: 0
+  };
+
+  const expected = 'https://farm2.staticflickr.com/1577/24770505034_31a9986429_b.jpg';
+  const actual = flickrFetcher.photoObjToURL(input);
+
+  expect(actual).toBe(expected);
+});
+```
+
+Running our tests, we are once again in the **red**. The simplest way to get this code to pass is another `if` statement.
+Remember, we're "committing whatever sins necessary in the process" to make the test pass:
+
+```javascript
+// flickr-fetcher.js
+
+export default {
+  photoObjToURL: (photoObj) => {
+    if (photoObj.id === '25373736106') {
+      return 'https://farm2.staticflickr.com/1669/25373736106_146731fcb7_b.jpg';
+    }
+    if (photoObj.id === '24765033584') {
+      return 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg';
+    }
+    return 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg';
+  }
+};
+```
+**Green** once again! Now here's our function refactored:
+
+```javascript
+// flickr-fetcher.js
+
+export default {
+  photoObjToURL = (photoObj) => {
+    return [
+      'https://farm',
+      photoObj.farm, '.staticflickr.com/',
+      photoObj.server, '/',
+      photoObj.id, '_',
+      photoObj.secret, '_b.jpg'
+    ].join('');
+  }
+};
+
+// or MINE… which is better:
+export default {
+  photoObjToURL: (photoObj) => {
+    return `https://farm${ photoObj.farm }.staticflickr.com/${ photoObj.server }/${ photoObj.id }_${ photoObj.secret }_b.jpg`
+  }
+};
+```
+
+**Green** all the way around!
+All thats left to do now is refactor our tests:
+
+```javascript
+// flickr-fetcher.test.js
+
+import flickrFetcher from '../flickr-fetcher.js';
+
+describe('flickrFetcher', () => {
+  test('flickrFetcher exists', () => {
+    expect(flickrFetcher).toBeDefined();
+  });
+
+  describe('photoObjToURL()', () => {
+    const testCases = [
+      {
+        input: {
+          id: '25373736106',
+          owner: '99117316@N03',
+          secret: '146731fcb7',
+          server: '1669',
+          farm: 2,
+          title: 'Dog goes to desperate measure to avoid walking on a leash',
+          ispublic: 1,
+          isfriend: 0,
+          isfamily: 0
+        },
+        expected: 'https://farm2.staticflickr.com/1669/25373736106_146731fcb7_b.jpg'
+      },
+      {
+        input: {
+          id: '24765033584',
+          owner: '27294864@N02',
+          secret: '3c190c104e',
+          server: '1514',
+          farm: 2,
+          title: 'the other cate',
+          ispublic: 1,
+          isfriend: 0,
+          isfamily: 0
+        },
+        expected: 'https://farm2.staticflickr.com/1514/24765033584_3c190c104e_b.jpg'
+      },
+      {
+        input: {
+          id: '24770505034',
+          owner: '97248275@N03',
+          secret: '31a9986429',
+          server: '1577',
+          farm: 2,
+          title: 'Some pug picture',
+          ispublic: 1,
+          isfriend: 0,
+          isfamily: 0
+        },
+        expected: 'https://farm2.staticflickr.com/1577/24770505034_31a9986429_b.jpg'
+      }
+    ];
+    
+    test.each(testCases)('takes a photo object and returns a URL', ({ input, expected }) => {
+      const actual = flickrFetcher.photoObjToURL(input);
+      expect(actual).toBe(expected);
+    });
+  });
+});
+```
+
+Ok, that looks nice 😎.
 
 #### **{1}** - Quick Chai Break
 _(referring to the code snippet above)_
@@ -671,3 +914,5 @@ _(referring to the code snippet above)_
 - [Chai Documentation](https://www.chaijs.com/api/bdd/)
 - [Mocha Documentation](https://mochajs.org/)
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
+
+---

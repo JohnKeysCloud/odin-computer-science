@@ -24,17 +24,17 @@ Audrey and Frank do not know each other.
 If Frank wanted to be introduced to Audrey we'd have to follow, the following path:
 
 Frank -> Emily -> Bill -> Audrey
-(Because Frank knows Emily… Emily knows Bill…  & Bill knows Audrey)
+(Because Frank knows Emily, Emily knows Bill, & Bill knows Audrey)
 
 We say that there is a **path** of three edges between Frank and Audrey.
-In fact, that its the most direct way for Frank to meet Audrey; there is no path between them with fewer than 💭three💭 edges. 
-We call a path between two vetices with the fewest edges a _shortest path_.
+In fact, that its the most direct way for Frank to meet Audrey; there is no path between them with fewer than three edges. 
+We call a path between two vertices with the fewest edges a _shortest path_.
 
 Below is a highlight of the shortest path:
 !["Social Network" Shortest Path](./assets/social-network-2.png)
 
 When a path goes from a particular vertex back to itself, thats a _cycle_.
-The social network contains many cycles; one of them goes from Audrey to Bill… to Emily to jeff… to Harry to Llana… and back to Audrey.
+The social network contains many cycles; one of them goes from Audrey to Bill, to Emily to Jeff, to Harry to Llana, and back to Audrey.
 
 Below, is an illustration of a _cycle_ path.
 !["Social Network" Cycle](./assets/social-network-3.png)
@@ -61,7 +61,7 @@ New York -> New Haven -> Hartford -> Sturbridge -> Weston -> Reading -> Concord
 Totaling 289 miles.
 
 ### Directed & Acyclic Graphs
-As briefly mentioned above… the relationship between vertices does not always go both ways.
+As briefly mentioned above, the relationship between vertices does not always go both ways.
 In a road map, for example, there could be one-way streets.
 Or here's a graph showing the order in which a goalie in ice hockey could get dressed:
 !["Goalie Dress Order"](./assets/goalie-dress-order-1.png)
@@ -81,10 +81,10 @@ We say that a directed edge _leaves_ one vertex and _enters_ another.
 For example, one directed edge leaves the vertex for chest pad and enters the vertex for sweater. 
 If a directed edge leaves vertex `u` and enters vertex `v`, we denote it by `(u, v)`, and the order of the vertices in the pair matters.
 The number of edges leaving a vertex is its _out-degree_.
-The number of edges entering a vetex is its _in-degree_.
+The number of edges entering a vertex is its _in-degree_.
 
 ## Graph Sizes
-When working with grpahs, its helpful to be able to talk about the set of vertices and the set of edges.
+When working with graphs, its helpful to be able to talk about the set of vertices and the set of edges.
 We usually denote the vertex set by `V` and the edge set by `E`.
 
 When we represent a graph or run an algorithm on a graph, we often want to use the sizes of the vertex and edge sets in asymptotic notation.
@@ -101,12 +101,12 @@ Similarly, instead of writing `θ(lg |E|)`, we write `θ(lg E)`
 There are several ways to represent graphs, each with its advantages and disadvantages.
 Some situations, or algorithms that we want to run with graphs as input, call for different representations.
 
-We will look at 💭three💭 criteria.
+We will look at three criteria.
 1. How much memory or space we need in each representation.
   1a. We can use asymptotic notation for this. 
   1b. It's a way to characterize functions, and a function can describe running time, an amount of space required, or some other resource.
 2. How long it takes to determine whether a given edge is in the graph
-3. How long it takes to find the neighbors of a given vetrex.
+3. How long it takes to find the neighbors of a given vertex.
 
 It is common to identify vertices not by name but instead by a number.
 That is, we typically number the `|V|` (set of vertices) vertices from `0` to `|V| - 1`.
@@ -148,9 +148,9 @@ A question to ponder:
 How can you organize an edge list to make searching for a particular edge take O(lg E) time?
 The answer is a little tricky. 
 
-### Adjancency Matrices
+### Adjacency Matrices
 For a graph with `|V|` vertices, an _adjacency matrix_ is a `|V| x |V|` matrix of 0s and 1s where the entry in row `i` and column `j` is 1 if and only if the edge `(i, j)` is in the graph.
-If you want to indicate an edge weight, put it in the row `i`, column `j` entry, and reserve a special value (prehaps `null`) to indicate an absent edge.
+If you want to indicate an edge weight, put it in the row `i`, column `j` entry, and reserve a special value (perhaps `null`) to indicate an absent edge.
 
 Here's the adjacency matrix for the social media graph:
 !["Adjacency Matrix" Based on social network example](./assets/adjacency-matrix-1.png)
@@ -242,7 +242,7 @@ for (let j = 0; i < vertex.length; j++) {
 ```
 
 #### How much space do Adjacency Lists take?
-We have `|V|` lists, and although each list could have as many as `|V| - 1` vertices, in total, the adjacency lists for an _undirected graph_ contain `2|E| elements`.Why `2|E|`? Each edge `(i,j)` appears exactly twice in the adjacecy lists. Once in `i`'s list and once in `j`'s list, and there are `|E|` edges. For a _directed graph_, the adjacency lists contain a total of `|E|` elements, one element per directed edge. 
+We have `|V|` lists, and although each list could have as many as `|V| - 1` vertices, in total, the adjacency lists for an _undirected graph_ contain `2|E| elements`.Why `2|E|`? Each edge `(i,j)` appears exactly twice in the adjacency lists. Once in `i`'s list and once in `j`'s list, and there are `|E|` edges. For a _directed graph_, the adjacency lists contain a total of `|E|` elements, one element per directed edge. 
 
 ### Space and Time For Each Method of Representation
 Assume `E` is the number of edges, `V` is the number of vertices and `d` is the degree of each vertex.

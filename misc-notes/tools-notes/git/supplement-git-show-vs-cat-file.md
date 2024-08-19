@@ -25,8 +25,8 @@ git cat-file -p <commit-hash>
 ### Example Output Comparison
 Assuming we have a commit with hash `abcd1234`:
 
-- **git show abcd1234:**
-  ```plaintext
+- **`git show abcd1234`:**
+```plaintext
   commit abcd1234
   Author: John Doe <john@example.com>
   Date:   Fri Jul 7 12:34:56 2023 -0700
@@ -39,17 +39,17 @@ Assuming we have a commit with hash `abcd1234`:
   +++ b/file.txt
   @@ -0,0 +1 @@
   +Hello, world!
-  ```
+```
 
-- **git cat-file -p abcd1234:**
-  ```plaintext
+- **`git cat-file -p abcd1234`:**
+```plaintext
   tree 1a2b3c4d5e6f7g8h9i0j
   parent 0987zyxwvu
   author John Doe <john@example.com> 1688783696 -0700
   committer John Doe <john@example.com> 1688783696 -0700
 
   Commit message
-  ```
+```
 
 ### Summary
 
@@ -58,4 +58,3 @@ Assuming we have a commit with hash `abcd1234`:
 
 Both commands are useful depending on the level of detail you need. If you want to see the actual changes made in a commit, use `git show`. If you want to see the metadata and structure of the commit, use `git cat-file -p`. 
 When using `cat-file -p`, you'll get output that includes the hashes for the `tree` and `parent`'(s) (if it's not a root commit) and `blob`'(s). These hashes can be used further to explore the history and content of your repository. For example you could run `git cat-file -p <tree-hash>`, `git cat-file -p <parent-hash>` or `git cat-file -p <blob-hash>`… with the latter triggers the inspection of the blobs actual content.
-

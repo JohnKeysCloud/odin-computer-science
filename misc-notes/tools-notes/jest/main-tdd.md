@@ -2470,7 +2470,7 @@ This means that achieving a high percentage of unit test coverage does not guara
 Often while writing tests you have some setup work that needs to happen before tests run, and you have some finishing work that needs to happen after tests run. Jest provides helper functions to handle this.
 
 ##### Repeating Setup
-💭 "Man, wtf is a hook?": ![]
+💭 "Man, wtf is a hook?": ![Hooks](../../rabbitHoles/hooks.md)
 
 `beforeEach` and `afterEach` are hooks provided by Jest that aid in performing tests that require a repeating setup.
 

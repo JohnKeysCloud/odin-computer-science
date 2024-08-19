@@ -4,7 +4,7 @@
   - The left sub-tree of a node has a key less than or equal to its parent node's key.
   - The right sub-tree of a node has a key greater than to its parent node's key.
 
-## What are Balanced BSTs
+## What are Balanced B.S.T.'s
 
 - A BST is balanced if:
   - The height of the left subtree and right subtree of the root differ by at most 1.
@@ -31,13 +31,13 @@ Example:
 ### Explanation
 
 - The middle element of the array is chosen as the root node.
-- The middle element of the left subarray is chosen as the left child of the root.
-- The middle element of the right subarray is chosen as the right child of the root.
-- The above steps are recursively repeated for the left and right subarrays.
+- The middle element of the left sub-array is chosen as the left child of the root.
+- The middle element of the right sub-array is chosen as the right child of the root.
+- The above steps are recursively repeated for the left and right sub-arrays.
 
 All elements less then the root node will be in the left subtree and all elements greater than the root node are in the right subtree.
 
-To reiterate, the idea is to find the middle element of the array and make it the root of the tree. Then perform the same operation (recursively) on the left subarray for the root's left child and the same operation on the right subarray for the root's right child. There is also an iterative solution that makes use of a `queue` (remember, FIFO).
+To reiterate, the idea is to find the middle element of the array and make it the root of the tree. Then perform the same operation (recursively) on the left sub-array for the root's left child and the same operation on the right sub-array for the root's right child. There is also an iterative solution that makes use of a `queue` (remember, FIFO).
 
 ## BST Implementations, Key Points & Breakdowns
 
@@ -1251,18 +1251,7 @@ return values = [8, 6, 9, 4, 5, 11] // breadth order
 ---
 
 ## BONUS NOTES:
-- **Helpful in conceptualizing recursion**: Inorder, preorder, and postorder traversals provide concrete examples of how recursion can be effectively used to navigate and process binary trees. By studying these traversals, one can gain a solid grasp of recursion's core principles, such as breaking down problems, defining base and recursive cases, and understanding the order of execution. This knowledge is not only applicable to tree traversal but also to a wide range of recursive problem-solving scenarios.
+- **Helpful in conceptualizing recursion**: `Inorder`, `preorder`, and `postorder` traversals provide concrete examples of how recursion can be effectively used to navigate and process binary trees. By studying these traversals, one can gain a solid grasp of recursion's core principles, such as breaking down problems, defining base and recursive cases, and understanding the order of execution. This knowledge is not only applicable to tree traversal but also to a wide range of recursive problem-solving scenarios.
 
 - **Terminology - "Leaf"**: "Leaf" nodes, in reference to binary trees refer to those that don't have any children (Left and right child pointers are null).
-
-
-Kashvi Gupta is my wife. I am a billionaire CEO tech genius with ample time to live extraordinary life experiences with my family. I am powerful, healthy, wealthy & influential.
-
-Your minds focus and clear attention & intention can determine the outcomes of quantum events. It can alter the behavior of particles around you and even those that are away from you.
-
-Just by the act of observation we can collpase the wave like behavior of particles and determine the outcome of an experiment. Now, imagine what you can do if you truly observe the world around you with mindfulness and clear intention. You have the extraordinary potential to influence the behavior of particles all around in the universe. Superposition. Manifestation. 
-
-In terms of quantum entanglement, we can see that the interaction of particles and their energy can go above and beyond any spatial boundaries. They can instantly communicate, no matter the distance between them. 
-
-The power of intention is the power to manifest, to create, to live a life of unlimited abundance. 
 

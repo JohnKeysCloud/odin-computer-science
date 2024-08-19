@@ -63,20 +63,20 @@ Body listener (bubble)
 1. **Preventing Event Handling on Child Elements**:
    If you want to prevent child elements from handling an event, you can stop the event during the capturing phase.
 
-    ```javascript
+```javascript
     document.body.addEventListener('click', (event) => {
       event.stopPropagation(); // Prevents event from reaching child elements
     }, true);
-    ```
+```
 
 2. **Event Delegation**:
    When implementing event delegation, you might want to handle the event as it travels down the DOM tree to ensure the parent element can intercept it before any child elements do.
 
-   ```javascript
+```javascript
    document.querySelector('.parent').addEventListener('click', (event) => {
      // Handle the event during capturing phase
    }, true);
-   ```
+```
 
    See: ![Event Delegation](./supplement-event-delegation.md)
 
@@ -85,11 +85,11 @@ Body listener (bubble)
 3. **Modifying Event Properties**:
    If you need to modify properties of the event object before any other event listeners get a chance to process it, handling the event during the capturing phase can be beneficial.
 
-   ```javascript
+```javascript
    document.addEventListener('click', (event) => {
      event.customProperty = 'customValue'; // Modify the event object
    }, true);
-   ```
+```
 
 4. **Specific Use Cases in Libraries**:
    Some libraries or frameworks might require capturing phase event handling to properly manage their internal event flow and ensure certain actions occur before others.

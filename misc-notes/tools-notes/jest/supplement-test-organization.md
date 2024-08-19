@@ -80,14 +80,14 @@ Sometimes, tests are organized alongside the source code, like this:
 ### **5. Running the Tests:**
 - **Test Runner Configuration**: Depending on your test runner (e.g., Jest, Mocha), you can configure it to run specific types of tests. For example, Jest can be configured to look for tests in the `/tests/unit` folder when running unit tests.
 - **Scripts**: You might have different npm scripts in your `package.json` to run different test types:
-  ```json
+```json
   "scripts": {
     "test": "jest",
     "test:unit": "jest --testPathPattern=tests/unit",
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:functional": "jest --testPathPattern=tests/functional"
   }
-  ```
+```
 
 ### **In Summary:**
 Organizing your tests into separate directories based on their type helps in maintaining clarity and structure within your project. It allows developers to easily locate and focus on the relevant tests, whether they are debugging a single unit or testing the entire application.

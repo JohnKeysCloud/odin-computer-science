@@ -14,7 +14,7 @@ Here is where we dive into the world of hash maps.
 A hash map takes in a key value pair, produces a hash code, and stores the key value pair in a bucket.
 
 ### What is a hash code?
-- Firstly we neeed to understnad what it means to "hash a value".
+- Firstly we need to understand what it means to "hash a value".
 - Hashing involves taking an input in and generating a corresponding output.
 - A hash function should be a pure function (…a function that given the same input, will always return the same output).
 - Hashing the same input should always return the same hash code, and there should be no random generation component.
@@ -29,14 +29,15 @@ function hash(name) {
 #### Difference between hashing and ciphering (encryption): **REVERSIBILITY**
 - Hashing is a one-way process.
 - Using the example above, you can make a hash code from a name, but you cannot take a hash code and get the name back.
-- If you have a name "Kashvi", we can hash it to "K". But it's impossible to reverse it from "K" back to its original form. You cannot know if its "Kashvi" or "Katia" or "Karen".
-- 💡 Hashing is very good for security. Given a psssword, you can save the hash of that password rather than the passwords plain text. If someone steals your hashes, they cannot know the original passwords since they are unable to reverse the hash back to the password.
+- If you have a name "Kashvi", we can hash it to "K". But it's impossible to reverse it from "K" back to its original form. You cannot know if it "Kashvi" or "Katia" or "Karen".
+- 💡 Hashing is very good for security. Given a password, you can save the hash of that password rather than the passwords plain text. If someone steals your hashes, they cannot know the original passwords since they are unable to reverse the hash back to the password.
 
 #### Use cases
 
 ##### Example 1: Directories
 Take the following where the single letters are the hash codes (as well as names of directories):
 
+``` plaintext
 C:
   carlos.txt
   carla.txt
@@ -47,6 +48,7 @@ B:
   bella.txt
   benjamin.txt
   bianca.txt
+```
 
 If we get a new name with the name "Carlos", we can run our has function to find out which folder to place them in:
 `hash('Carlos -> 'C')`
@@ -461,7 +463,7 @@ So the key will be stored in the bucket determined by the perfect hash function.
   Collisions occur when different keys generate the same hash code, leading to a bucket that already contains a key-value pair.
 
 4. When is it a good time to grow our table?
-  If we are keeping track of the _capacity_ (the total number of buckets we have) and _load factor_ (which uses the capcity to determine when to grow the table), then we can grow our table when the load factor exceeds a certain threshold (e.g., 0.75 or, when our hash table has reached 75% capacity). This is the most common way to grow our table… preventing the number of nodes from exceeding the number of buckets.
+  If we are keeping track of the _capacity_ (the total number of buckets we have) and _load factor_ (which uses the capacity to determine when to grow the table), then we can grow our table when the load factor exceeds a certain threshold (e.g., 0.75 or, when our hash table has reached 75% capacity). This is the most common way to grow our table, preventing the number of nodes from exceeding the number of buckets.
 
 ### Conclusion
 There are many methods for mapping keys to buckets in a hash map.

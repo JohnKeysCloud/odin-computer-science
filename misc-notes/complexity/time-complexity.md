@@ -1,4 +1,4 @@
-## Asymtotic Notations
+## Asymptotic Notations
 
 - Are used to describe the running time of an algorithm in terms of its input size.
 - There are several notations that measure that running time in different ways..
@@ -53,7 +53,7 @@ function addUpTo(n) {
 The running time of the algorithm grows logarithmically in proportion to the input size.
 Logarithmic complexity tells us that the number os steps an algorithm takes increases by 1 as the data doubles.
 That is still very efficient.
-Going from 5,000 to 10,000 items and only takine one additional step can scale very well.
+Going from 5,000 to 10,000 items and only taking one additional step can scale very well.
 
 # Example: Binary Search, which only works on sorted arrays.
 
@@ -111,10 +111,10 @@ It's a combination of O(n) and O(log n) algorithms.
 It's the average time complexity for algorithms that divide the problem into smaller problems and then combine the results.
 
 One such algorithm is the Merge Sort algorithm.
-Another, is constructing a Cartesian Tree… where (for a sequence of distinct numbers) is a binary tree with the following properties:
+Another, is constructing a Cartesian Tree, where (for a sequence of distinct numbers) is a binary tree with the following properties:
 
 - It is heap-ordered, so that each parent is less than its children.
-- It is a binary search tree, so that the inorder traversal of the tree produces the original sequence.
+- It is a binary search tree, so that the `inorder` traversal of the tree produces the original sequence.
   The algorithm naturally behaves like 0(N log N) without using smaller parts with O(N) or O(log N) time complexities inside.
   This shows that while nested complexities can be common, they're not the only way an algorithm can achieve a particular time complexity.
 
@@ -175,11 +175,11 @@ It's not very efficient, but it's not the worst.
 It's commonly seen when you loop over a data set and within each loop you loop over it again.
 Below, bubble sort is an example of an algorithm with quadratic time complexity.
 Because theres a loop within a loop, the number of steps is n \* n = n^2
-The outer loop iterates n times, and for each iteration of the otuer loop, the inner loop can perform up to n - 1
+The outer loop iterates n times, and for each iteration of the outer loop, the inner loop can perform up to n - 1
 comparisons and swaps in the WORST case (from which Big O is derived).
 When we add the optimization for no swaps, the best case is O(n) and the worst case is O(n^2).
 
-- Steps for bubbleSort:
+- Steps for `bubbleSort`:
   - [3,1,4,1,5,9] has 6 elements ... as it grows the number of steps grows quadratically.
   - The i loop runs 5 times maximum (assuming theres a swap in every iteration) because it starts at 6 and goes down to 1.
   - j runs one less than i in every iteration.
@@ -266,7 +266,7 @@ function bubbleSort(array) {
   - Compare 1 and 1. Do nothing. → [1,1,2,3,4,5,9]
   - Compare 1 and 2. Do nothing. → [1,1,2,3,4,5,9]
 
-  > Condition was never met in this iteration, so noSwaps remains true and the loop breaks
+  > Condition was never met in this iteration, so `noSwaps` remains true and the loop breaks
 
 // > ----------------------------------------------------------------------------------------------------------
 
@@ -388,8 +388,7 @@ In this case our algorithm takes just one step.
 This has a complexity of O(1).
 This is Omega Complexity.
 
-It isn't considered as useful because it is unlikely our item will often be the first value in our data structure search…
-so it doesn't give ua any idea how well the algorithm will scale.
+It isn't considered as useful because it is unlikely our item will often be the first value in our data structure search, so it doesn't give ua any idea how well the algorithm will scale.
 
 // > ----------------------------------------------------------------------------------------------------------
 
@@ -428,7 +427,7 @@ function linearSearch(arr, val) {
 
 Using a worst-case scenario we can make sure our algorithm will scale in all outcomes.
 If we write an algorithm that could potentially run in constant time, but also could run in linear time in the worse case, it can only scale as teh input grows if it still works when the worst case does happen.
-You need to be confident your code won't lock up and leave users frustrated if you susddenly get an input of a million items instead of 10.
+You need to be confident your code won't lock up and leave users frustrated if you suddenly get an input of a million items instead of 10.
 
 // > ----------------------------------------------------------------------------------------------------------
 // > ----------------------------------------------------------------------------------------------------------
@@ -480,13 +479,13 @@ But in Big O Notation, we drop the constant and the coefficient, so both algorit
 
 ## Assorted Notes
 
-- A good rule-of-index (play on rule-of-thumb), is if possuble, avoide nested for-loops if the input size is large. Use two separate loops instead.
+- A good rule-of-index (play on rule-of-thumb), is if possible, avoid nested for-loops if the input size is large. Use two separate loops instead.
 
 // > ----------------------------------------------------------------------------------------------------------
 
 - A practical scenario for when to use Big O to compare algorithms:
 
-* Say we need to pull in some data from an API or a database. An array of 1000 users comes back and now you need to sort this arry into alphabetical order...
+* Say we need to pull in some data from an API or a database. An array of 1000 users comes back and now you need to sort this array into alphabetical order...
 * If we use a sorting algorithm with linear time (O(n)) complexity, where n is the input size, then there will be around 1000 operations.
 * If we use a sorting algorithm with quadratic time (O(n^2)) complexity, then there will be roughly 1000 \* 1000 operations. Thats 1 MILLION operations.
 * That's 999,000 more operations, just because you chose the less efficient algorithm for the given dataset.
@@ -507,10 +506,10 @@ arr.shift(); // [2, 3, 4]
 arr.unshift(1); // [1, 2, 3, 4]
 ```
 
-- With push & pop, all we do is create a new place at the he end of the array and place a value there. It doesn't matterhow big the array is, it will always take the same amount of time. Big O(1) … constant time.
-- But say we wanted to add a value to the front of the array… via JabaScripz built in: unshift(value). We would have tore-index every item in the array, as the first index(0) would not point to our newly added value (0).
-- We'd have to add 1 to every index in the array as the old first item is now the second, the old second index is now thethird, and so on.
-- Therefore shifting and unshifting have linear time complexity (O(n))… because the longer the input array, the more itemswe have to re-index.
+- With push & pop, all we do is create a new place at the he end of the array and place a value there. It doesn't matter how big the array is, it will always take the same amount of time. Big O(1) … constant time.
+- But say we wanted to add a value to the front of the array via   `JabaScripz`'s built in: `unshift(value)`. We would have to re-index every item in the array, as the first index(0) would not point to our newly added value (0).
+- We'd have to add 1 to every index in the array as the old first item is now the second, the old second index is now the third, and so on.
+- Therefore shifting and unshifting have linear time complexity (O(n))because the longer the input array, the more items we have to re-index.
 
 // > ----------------------------------------------------------------------------------------------------------
 
@@ -573,15 +572,15 @@ linearithmic(100)
 - The outer loop iterates 100 times.
 - The inner loop iterates 7 times.
 
-* For the second loop, the number of steps required to reach a certain size of dataset gets smaller as teh dataset is halved (or reduced by a constant fraction) in each step. The base of the logarithm corresponds to the division facotr; in this case, doubling corresponds to a base-2 logarithm.
+* For the second loop, the number of steps required to reach a certain size of dataset gets smaller as teh dataset is halved (or reduced by a constant fraction) in each step. The base of the logarithm corresponds to the division factor; in this case, doubling corresponds to a base-2 logarithm.
 * The key insight here is that the efficiency comes from not having to perform operations on every single element linearly. Instead, by exploiting this kind of exponential reduction, the algorithm reduces the number of operations needed to reach its goal, leading to faster execution times for large datasets compared to purely linear approaches.
-* Reminder: mergeSort has big O(n log(n)) time complexity.
+* Reminder: `mergeSort` has big O(n log(n)) time complexity.
 
 // > ----------------------------------------------------------------------------------------------------------
 
 * Quick reminders:
-  - Looping through 2 seperate arrays one after another = O(a + b) Any step that happens one after another, we add them => +
-  - Looping through 2 nested seperate arrays = O (a * b) Any step that is nested, we multiply them => *
+  - Looping through 2 separate arrays one after another = O(a + b) Any step that happens one after another, we add them => +
+  - Looping through 2 nested separate arrays = O (a * b) Any step that is nested, we multiply them => *
 
 * Loops using same input:
   - Looping through same array one after another => O(n + n) => O(2n) => O(n) or Linear Time.

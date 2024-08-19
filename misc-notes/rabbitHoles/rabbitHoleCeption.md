@@ -165,7 +165,7 @@ console.log(reconstructedNumber); // 1234
 
 
 #### Realistic Computational Example:
-To show how it might actually be used in a computationl sense with real splitting, let's take the number 200.
+To show how it might actually be used in a computational sense with real splitting, let's take the number 200.
 
 1. Original number: `200`
 2. Split into two parts
@@ -327,8 +327,3 @@ It does not run until the first loop reaches 5,
 at which point loop #2 runs 1 times, and one more time for each iteration until reaching loop 9. So loop #2 runs 5 times in the last loop #1 iteration
 
 1, 2, 3, 4, 5
-
-
-
-
-
